@@ -11,9 +11,9 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
+
+# It actually need cartesapp, but it should already be installed on your system
 dependencies = [
-    # It actually need cartesapp, but it should already be installed on your system
-    # "cartesapp @ git+https://github.com/prototyp3-dev/cartesapp@main",
 ]
 
 [project.urls]
