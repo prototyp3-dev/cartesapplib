@@ -1,0 +1,13 @@
+.*
+!.gitignore
+!.sdk
+!.rootfs
+!.github
+
+__pycache__/
+*.py[cod]
+
+*.egg-info/
+dist/
+
+build/
