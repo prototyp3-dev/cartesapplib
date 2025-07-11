@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
+import itertools
 
 from cartesapp.storage import Entity, helpers
 from cartesapp.input import query
@@ -121,13 +122,19 @@ def get_indexes(**kwargs):
         idx_query = idx_query.filter(lambda o: o.app_contract == kwargs.get('app_contract'))
 
     if tags is not None and len(tags) > 0:
+        tags_query = Tag.select(lambda t: t.name in tags)
         if kwargs.get('tags_or') is not None and kwargs['tags_or']:
-            tags_fn = lambda t: t.name in tags
+            reponse_query = helpers.distinct(
+                o for o in idx_query for t in Tag if t.inout == o and t.name in tags
+            )
         else:
-            tags_fn = lambda t: t.name in tags and helpers.count(t) == len(tags)
-        reponse_query = helpers.distinct(
-            o for o in idx_query for t in Tag if t.inout == o and tags_fn(t)
-        )
+            tags_query = helpers.select((t.inout,t.name) for t in Tag.select().order_by(Tag.inout) if t.name in tags)
+            tags_query_counts = [(key, sum(1 for _,_ in value))
+                for key, value in itertools.groupby(tags_query.fetch(), lambda x: x[0])]
+            tags_inouts = [t[0] for t in tags_query_counts if t[1] == len(tags)]
+            reponse_query = helpers.distinct(
+                o for o in idx_query if o in tags_inouts
+            )
     else:
         reponse_query = helpers.distinct(
             o for o in idx_query
@@ -163,6 +170,7 @@ def get_indexes(**kwargs):
 
 class IndexerPayload(BaseModel):
     tags: Optional[List[str]]
+    tags_or: Optional[bool]
     type: Optional[str]
     msg_sender: Optional[str]
     block_timestamp_gte: Optional[int]
