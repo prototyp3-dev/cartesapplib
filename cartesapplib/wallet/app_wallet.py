@@ -294,7 +294,7 @@ class Erc20Event(BaseModel):
     balance:    UInt256
 
 @contract_call(module_name='wallet', no_module_header=True)
-class WithdrawErc20(BaseModel):
+class WithdrawErc20Voucher(BaseModel):
     user:       Address
     amount:     UInt256
 
@@ -307,7 +307,7 @@ class Erc721Event(BaseModel):
     ids:        List[UInt256]
 
 @contract_call(module_name='wallet', no_module_header=True)
-class WithdrawErc721(BaseModel):
+class WithdrawErc721Voucher(BaseModel):
     sender:     Address
     receiver:   Address
     id:         UInt256
@@ -323,7 +323,7 @@ class Erc1155Event(BaseModel):
     amounts:    List[UInt256]
 
 @contract_call(module_name='wallet', no_module_header=True)
-class WithdrawErc1155Single(BaseModel):
+class WithdrawErc1155SingleVoucher(BaseModel):
     sender:     Address
     receiver:   Address
     id:         UInt256
@@ -331,7 +331,7 @@ class WithdrawErc1155Single(BaseModel):
     data:       Bytes
 
 @contract_call(module_name='wallet', no_module_header=True)
-class WithdrawErc1155Batch(BaseModel):
+class WithdrawErc1155BatchVoucher(BaseModel):
     sender:     Address
     receiver:   Address
     ids:        List[UInt256]
@@ -598,7 +598,7 @@ def deposit_ether(payload: DepositEtherPayload) -> bool:
     return True
 
 @mutation(module_name='wallet', no_module_header=True)
-def EtherWithdraw(payload: WithdrawEtherPayload) -> bool: # camel case name to maintain other hlf standard
+def WithdrawEther(payload: WithdrawEtherPayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
@@ -621,7 +621,7 @@ def EtherWithdraw(payload: WithdrawEtherPayload) -> bool: # camel case name to m
     return True
 
 @mutation(module_name='wallet', no_module_header=True)
-def EtherTransfer(payload: TransferEtherPayload) -> bool: # camel case name to maintain other hlf standard
+def TransferEther(payload: TransferEtherPayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
@@ -684,7 +684,7 @@ def deposit_erc20(payload: DepositErc20Payload) -> bool:
     return True
 
 @mutation(module_name='wallet', no_module_header=True)
-def Erc20Withdraw(payload: WithdrawErc20Payload) -> bool: # camel case name to maintain other hlf standard
+def WithdrawErc20(payload: WithdrawErc20Payload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
@@ -692,7 +692,7 @@ def Erc20Withdraw(payload: WithdrawErc20Payload) -> bool: # camel case name to m
     new_balance = wallet.withdraw_erc20(payload.token,payload.amount)
 
     # submit contract call
-    withdrawal = WithdrawErc20(
+    withdrawal = WithdrawErc20Voucher(
         user = wallet.owner(),
         amount = payload.amount
     )
@@ -712,7 +712,7 @@ def Erc20Withdraw(payload: WithdrawErc20Payload) -> bool: # camel case name to m
     return True
 
 @mutation(module_name='wallet', no_module_header=True)
-def Erc20Transfer(payload: TransferErc20Payload) -> bool: # camel case name to maintain other hlf standard
+def TransferErc20(payload: TransferErc20Payload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
@@ -777,7 +777,7 @@ def deposit_erc721(payload: DepositErc721Payload) -> bool:
     return True
 
 @mutation(module_name='wallet', no_module_header=True)
-def Erc721Withdraw(payload: WithdrawErc721Payload) -> bool: # camel case name to maintain other hlf standard
+def WithdrawErc721(payload: WithdrawErc721Payload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
@@ -785,7 +785,7 @@ def Erc721Withdraw(payload: WithdrawErc721Payload) -> bool: # camel case name to
     new_ids_balance = wallet.withdraw_erc721(payload.token,payload.id)
 
     # submit contract call
-    withdrawal = WithdrawErc721(
+    withdrawal = WithdrawErc721Voucher(
         sender = metadata.app_contract,
         receiver = wallet.owner(),
         id = payload.id
@@ -806,7 +806,7 @@ def Erc721Withdraw(payload: WithdrawErc721Payload) -> bool: # camel case name to
     return True
 
 @mutation(module_name='wallet', no_module_header=True)
-def Erc721Transfer(payload: TransferErc721Payload) -> bool: # camel case name to maintain other hlf standard
+def TransferErc721(payload: TransferErc721Payload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
@@ -829,7 +829,7 @@ def Erc721Transfer(payload: TransferErc721Payload) -> bool: # camel case name to
     if len(receiver) == 42: # only emit event for valid address length
         receiver_asset_event = Erc721Event(
             timestamp =metadata.block_timestamp,
-            user = payload.receiver,
+            user = receiver,
             address = payload.token,
             mod_id = payload.id,
             ids = new_receiver_balance
@@ -871,7 +871,7 @@ def deposit_erc1155_single(payload: DepositErc1155SinglePayload) -> bool:
     return True
 
 @mutation(module_name='wallet', no_module_header=True)
-def Erc1155SingleWithdraw(payload: WithdrawErc1155SinglePayload) -> bool: # camel case name to maintain other hlf standard
+def WithdrawErc1155Single(payload: WithdrawErc1155SinglePayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
@@ -879,7 +879,7 @@ def Erc1155SingleWithdraw(payload: WithdrawErc1155SinglePayload) -> bool: # came
     new_balance = wallet.withdraw_erc1155(payload.token,payload.id,payload.amount)
 
     # submit contract call
-    withdrawal = WithdrawErc1155Single(
+    withdrawal = WithdrawErc1155SingleVoucher(
         sender = metadata.app_contract,
         receiver = wallet.owner(),
         id = payload.id,
@@ -904,7 +904,7 @@ def Erc1155SingleWithdraw(payload: WithdrawErc1155SinglePayload) -> bool: # came
     return True
 
 @mutation(module_name='wallet', no_module_header=True)
-def Erc1155SingleTransfer(payload: TransferErc1155SinglePayload) -> bool: # camel case name to maintain other hlf standard
+def TransferErc1155Single(payload: TransferErc1155SinglePayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
@@ -929,7 +929,7 @@ def Erc1155SingleTransfer(payload: TransferErc1155SinglePayload) -> bool: # came
     if len(receiver) == 42: # only emit event for valid address length
         receiver_asset_event = Erc1155Event(
             timestamp =metadata.block_timestamp,
-            user = payload.receiver,
+            user = receiver,
             address = payload.token,
             mod_ids = [payload.id],
             mod_amounts = [payload.amount],
@@ -976,7 +976,7 @@ def deposit_erc1155_batch(payload: DepositErc1155BatchPayload) -> bool:
     return True
 
 @mutation(module_name='wallet', no_module_header=True)
-def Erc1155BatchWithdraw(payload: WithdrawErc1155BatchPayload) -> bool: # camel case name to maintain other hlf standard
+def WithdrawErc1155Batch(payload: WithdrawErc1155BatchPayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
@@ -986,7 +986,7 @@ def Erc1155BatchWithdraw(payload: WithdrawErc1155BatchPayload) -> bool: # camel 
         new_balance = wallet.withdraw_erc1155(payload.token,payload.ids[i],payload.amounts[i])
 
     # submit contract call
-    withdrawal = WithdrawErc1155Batch(
+    withdrawal = WithdrawErc1155BatchVoucher(
         sender = metadata.app_contract,
         receiver = wallet.owner(),
         ids = payload.ids,
@@ -1013,7 +1013,7 @@ def Erc1155BatchWithdraw(payload: WithdrawErc1155BatchPayload) -> bool: # camel 
     return True
 
 @mutation(module_name='wallet', no_module_header=True)
-def Erc1155BatchTransfer(payload: TransferErc1155BatchPayload) -> bool: # camel case name to maintain other hlf standard
+def TransferErc1155Batch(payload: TransferErc1155BatchPayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
@@ -1043,7 +1043,7 @@ def Erc1155BatchTransfer(payload: TransferErc1155BatchPayload) -> bool: # camel 
     if len(receiver) == 42: # only emit event for valid address length
         receiver_asset_event = Erc1155Event(
             timestamp =metadata.block_timestamp,
-            user = payload.receiver,
+            user = receiver,
             address = payload.token,
             mod_ids = payload.ids,
             mod_amounts = payload.amounts,
