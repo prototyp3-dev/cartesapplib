@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional, List, Dict, Tuple, Annotated, get_type_hints
 import logging
 
-from cartesi.abi import Address, UInt256, UInt64, Int256, Bytes, ABIType, decode_to_model
+from cartesi.abi import Address, UInt256, UInt64, Int256, Bytes, Bytes32, ABIType, decode_to_model
 
 from cartesapp.storage import Entity, helpers
 from cartesapp.input import mutation, query
@@ -15,11 +15,11 @@ LOGGER = logging.getLogger(__name__)
 
 # config
 
-ETHER_PORTAL_ADDRESS = "0xc70076a466789B595b50959cdc261227F0D70051"
-ERC20_PORTAL_ADDRESS = "0xc700D6aDd016eECd59d989C028214Eaa0fCC0051"
-ERC721_PORTAL_ADDRESS = "0xc700d52F5290e978e9CAe7D1E092935263b60051"
-ERC1155_SINGLE_PORTAL_ADDRESS = "0xc700A261279aFC6F755A3a67D86ae43E2eBD0051"
-ERC1155_BATCH_PORTAL_ADDRESS = "0xc700A2e5531E720a2434433b6ccf4c0eA2400051"
+ETHER_PORTAL_ADDRESS = "0xA632c5c05812c6a6149B7af5C56117d1D2603828"
+ERC20_PORTAL_ADDRESS = "0xACA6586A0Cf05bD831f2501E7B4aea550dA6562D"
+ERC721_PORTAL_ADDRESS = "0x9E8851dadb2b77103928518846c4678d48b5e371"
+ERC1155_SINGLE_PORTAL_ADDRESS = "0x18558398Dd1a8cE20956287a4Da7B76aE7A96662"
+ERC1155_BATCH_PORTAL_ADDRESS = "0xe246Abb974B307490d9C6932F48EbE79de72338A"
 
 
 ether_deposit_template = '''
@@ -190,7 +190,7 @@ class WithdrawEtherPayload(BaseModel):
     exec_layer_data: Bytes
 
 class TransferEtherPayload(BaseModel):
-    receiver: Address
+    receiver: Bytes32
     amount: UInt256
     exec_layer_data: Bytes
 
@@ -207,7 +207,7 @@ class WithdrawErc20Payload(BaseModel):
 
 class TransferErc20Payload(BaseModel):
     token: Address
-    receiver: Address
+    receiver: Bytes32
     amount: UInt256
     exec_layer_data: Bytes
 
@@ -224,7 +224,7 @@ class WithdrawErc721Payload(BaseModel):
 
 class TransferErc721Payload(BaseModel):
     token: Address
-    receiver: Address
+    receiver: Bytes32
     id: UInt256
     exec_layer_data: Bytes
 
@@ -243,7 +243,7 @@ class WithdrawErc1155SinglePayload(BaseModel):
 
 class TransferErc1155SinglePayload(BaseModel):
     token: Address
-    receiver: Address
+    receiver: Bytes32
     id: UInt256
     amount: UInt256
     exec_layer_data: Bytes
@@ -267,7 +267,7 @@ class WithdrawErc1155BatchPayload(BaseModel):
 
 class TransferErc1155BatchPayload(BaseModel):
     token: Address
-    receiver: Address
+    receiver: Bytes32
     ids: List[UInt256]
     amounts: List[UInt256]
     exec_layer_data: Bytes
@@ -278,14 +278,14 @@ class BalancePayload(BaseModel):
 
 # Output
 
-@event(module_name='wallet')
+@event(module_name='wallet', no_module_header=True)
 class EtherEvent(BaseModel):
     timestamp:  UInt64
     user:       Address
     mod_amount: Int256
     balance:    UInt256
 
-@event(module_name='wallet')
+@event(module_name='wallet', no_module_header=True)
 class Erc20Event(BaseModel):
     timestamp:  UInt64
     user:       Address
@@ -293,12 +293,12 @@ class Erc20Event(BaseModel):
     mod_amount: Int256
     balance:    UInt256
 
-@contract_call(module_name='wallet')
+@contract_call(module_name='wallet', no_module_header=True)
 class WithdrawErc20(BaseModel):
     user:       Address
     amount:     UInt256
 
-@event(module_name='wallet')
+@event(module_name='wallet', no_module_header=True)
 class Erc721Event(BaseModel):
     timestamp:  UInt64
     user:       Address
@@ -306,13 +306,13 @@ class Erc721Event(BaseModel):
     mod_id:     Int256
     ids:        List[UInt256]
 
-@contract_call(module_name='wallet')
+@contract_call(module_name='wallet', no_module_header=True)
 class WithdrawErc721(BaseModel):
     sender:     Address
     receiver:   Address
     id:         UInt256
 
-@event(module_name='wallet')
+@event(module_name='wallet', no_module_header=True)
 class Erc1155Event(BaseModel):
     timestamp:  UInt64
     user:       Address
@@ -322,7 +322,7 @@ class Erc1155Event(BaseModel):
     ids:        List[UInt256]
     amounts:    List[UInt256]
 
-@contract_call(module_name='wallet')
+@contract_call(module_name='wallet', no_module_header=True)
 class WithdrawErc1155Single(BaseModel):
     sender:     Address
     receiver:   Address
@@ -330,7 +330,7 @@ class WithdrawErc1155Single(BaseModel):
     amount:     UInt256
     data:       Bytes
 
-@contract_call(module_name='wallet')
+@contract_call(module_name='wallet', no_module_header=True)
 class WithdrawErc1155Batch(BaseModel):
     sender:     Address
     receiver:   Address
@@ -338,7 +338,7 @@ class WithdrawErc1155Batch(BaseModel):
     amounts:    List[UInt256]
     data:       Bytes
 
-@output(module_name='wallet')
+@output(module_name='wallet', no_module_header=True)
 class WalletBalance(BaseModel):
     ether:      Optional[int]
     erc20:      Optional[Dict[str,int]]
@@ -572,7 +572,7 @@ def get_wallet(owner: str | None = None) -> Wallet:
 # Ether
 
 @mutation(
-    module_name='wallet',
+    module_name='wallet', no_module_header=True,
     msg_sender=ETHER_PORTAL_ADDRESS,
     no_header=True,
     packed=True,
@@ -597,7 +597,7 @@ def deposit_ether(payload: DepositEtherPayload) -> bool:
     LOGGER.debug(f"{payload.sender} deposited {payload.amount} ether (wei)")
     return True
 
-@mutation(module_name='wallet')
+@mutation(module_name='wallet', no_module_header=True)
 def EtherWithdraw(payload: WithdrawEtherPayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
@@ -620,15 +620,16 @@ def EtherWithdraw(payload: WithdrawEtherPayload) -> bool: # camel case name to m
     LOGGER.debug(f"{wallet.owner()} withdrew {payload.amount} ether (wei)")
     return True
 
-@mutation(module_name='wallet')
+@mutation(module_name='wallet', no_module_header=True)
 def EtherTransfer(payload: TransferEtherPayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
     wallet = get_wallet()
 
+    receiver = f"0x{payload.receiver[12:].hex()}" if payload.receiver.startswith(b'\0'*12) else f"0x{payload.receiver.hex()}"
     new_balance, new_receiver_balance = \
-        wallet.transfer_ether(payload.receiver,payload.amount)
+        wallet.transfer_ether(receiver,payload.amount)
 
     # send event
     asset_event = EtherEvent(
@@ -640,22 +641,23 @@ def EtherTransfer(payload: TransferEtherPayload) -> bool: # camel case name to m
     emit_event(asset_event,tags=["wallet","ether","transfer",wallet.owner()])
 
     # send event
-    receiver_asset_event = EtherEvent(
-        timestamp = metadata.block_timestamp,
-        user = payload.receiver,
-        mod_amount = payload.amount,
-        balance = new_receiver_balance
-    )
-    emit_event(receiver_asset_event,tags=["wallet","ether","transfer",payload.receiver])
+    if len(receiver) == 42: # only emit event for valid address length
+        receiver_asset_event = EtherEvent(
+            timestamp = metadata.block_timestamp,
+            user = receiver,
+            mod_amount = payload.amount,
+            balance = new_receiver_balance
+        )
+        emit_event(receiver_asset_event,tags=["wallet","ether","transfer",receiver])
 
-    LOGGER.debug(f"{wallet.owner()} transfered {payload.amount} ether (wei) to {payload.receiver}")
+    LOGGER.debug(f"{wallet.owner()} transfered {payload.amount} ether (wei) to {receiver}")
     return True
 
 
 # Erc20
 
 @mutation(
-    module_name='wallet',
+    module_name='wallet', no_module_header=True,
     msg_sender=ERC20_PORTAL_ADDRESS,
     no_header=True,
     packed=True,
@@ -681,7 +683,7 @@ def deposit_erc20(payload: DepositErc20Payload) -> bool:
     LOGGER.debug(f"{payload.sender} deposited {payload.amount} of {payload.token} tokens")
     return True
 
-@mutation(module_name='wallet')
+@mutation(module_name='wallet', no_module_header=True)
 def Erc20Withdraw(payload: WithdrawErc20Payload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
@@ -709,14 +711,15 @@ def Erc20Withdraw(payload: WithdrawErc20Payload) -> bool: # camel case name to m
     LOGGER.debug(f"{metadata.msg_sender} withdrew {payload.amount} of {payload.token} tokens")
     return True
 
-@mutation(module_name='wallet')
+@mutation(module_name='wallet', no_module_header=True)
 def Erc20Transfer(payload: TransferErc20Payload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
     wallet = get_wallet()
+    receiver = f"0x{payload.receiver[12:].hex()}" if payload.receiver.startswith(b'\0'*12) else f"0x{payload.receiver.hex()}"
     new_balance, new_receiver_balance = \
-            wallet.transfer_erc20(payload.token,payload.receiver,payload.amount)
+            wallet.transfer_erc20(payload.token,receiver,payload.amount)
 
     # send event
     asset_event = Erc20Event(
@@ -729,16 +732,17 @@ def Erc20Transfer(payload: TransferErc20Payload) -> bool: # camel case name to m
     emit_event(asset_event,tags=["wallet","erc20","transfer",payload.token,wallet.owner()])
 
     # send event
-    receiver_asset_event = Erc20Event(
-        timestamp = metadata.block_timestamp,
-        user = payload.receiver,
-        address = payload.token,
-        mod_amount = payload.amount,
-        balance = new_receiver_balance
-    )
-    emit_event(receiver_asset_event,tags=["wallet","erc20","transfer",payload.token,payload.receiver])
+    if len(receiver) == 42: # only emit event for valid address length
+        receiver_asset_event = Erc20Event(
+            timestamp = metadata.block_timestamp,
+            user = receiver,
+            address = payload.token,
+            mod_amount = payload.amount,
+            balance = new_receiver_balance
+        )
+        emit_event(receiver_asset_event,tags=["wallet","erc20","transfer",payload.token,receiver])
 
-    LOGGER.debug(f"{metadata.msg_sender} transfered {payload.amount} of {payload.token} to {payload.receiver}")
+    LOGGER.debug(f"{metadata.msg_sender} transfered {payload.amount} of {payload.token} to {receiver}")
 
     return True
 
@@ -746,7 +750,7 @@ def Erc20Transfer(payload: TransferErc20Payload) -> bool: # camel case name to m
 # Erc721
 
 @mutation(
-    module_name='wallet',
+    module_name='wallet', no_module_header=True,
     msg_sender=ERC721_PORTAL_ADDRESS,
     no_header=True,
     packed=True,
@@ -772,7 +776,7 @@ def deposit_erc721(payload: DepositErc721Payload) -> bool:
     LOGGER.debug(f"{payload.sender} deposited id {payload.id} of {payload.token} token")
     return True
 
-@mutation(module_name='wallet')
+@mutation(module_name='wallet', no_module_header=True)
 def Erc721Withdraw(payload: WithdrawErc721Payload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
@@ -801,14 +805,15 @@ def Erc721Withdraw(payload: WithdrawErc721Payload) -> bool: # camel case name to
     LOGGER.debug(f"{metadata.msg_sender} withdrew id {payload.id} of {payload.token} token")
     return True
 
-@mutation(module_name='wallet')
+@mutation(module_name='wallet', no_module_header=True)
 def Erc721Transfer(payload: TransferErc721Payload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
     wallet = get_wallet()
+    receiver = f"0x{payload.receiver[12:].hex()}" if payload.receiver.startswith(b'\0'*12) else f"0x{payload.receiver.hex()}"
     new_balance, new_receiver_balance = \
-            wallet.transfer_erc721(payload.token,payload.receiver,payload.id)
+            wallet.transfer_erc721(payload.token,receiver,payload.id)
 
     # send event
     asset_event = Erc721Event(
@@ -821,22 +826,23 @@ def Erc721Transfer(payload: TransferErc721Payload) -> bool: # camel case name to
     emit_event(asset_event,tags=["wallet","erc721","transfer",payload.token,wallet.owner()])
 
     # send event
-    receiver_asset_event = Erc721Event(
-        timestamp =metadata.block_timestamp,
-        user = payload.receiver,
-        address = payload.token,
-        mod_id = payload.id,
-        ids = new_receiver_balance
-    )
-    emit_event(receiver_asset_event,tags=["wallet","erc721","transfer",payload.token,payload.id,payload.receiver])
+    if len(receiver) == 42: # only emit event for valid address length
+        receiver_asset_event = Erc721Event(
+            timestamp =metadata.block_timestamp,
+            user = payload.receiver,
+            address = payload.token,
+            mod_id = payload.id,
+            ids = new_receiver_balance
+        )
+        emit_event(receiver_asset_event,tags=["wallet","erc721","transfer",payload.token,payload.id,receiver])
 
-    LOGGER.debug(f"{metadata.msg_sender} transfered id {payload.id} of {payload.token} token to {payload.receiver}")
+    LOGGER.debug(f"{metadata.msg_sender} transfered id {payload.id} of {payload.token} token to {receiver}")
     return True
 
 # Erc1155
 
 @mutation(
-    module_name='wallet',
+    module_name='wallet', no_module_header=True,
     msg_sender=ERC1155_SINGLE_PORTAL_ADDRESS,
     no_header=True,
     packed=True,
@@ -864,7 +870,7 @@ def deposit_erc1155_single(payload: DepositErc1155SinglePayload) -> bool:
     LOGGER.debug(f"{payload.sender} deposited id {payload.id} the {payload.amount} amount of {payload.token} token")
     return True
 
-@mutation(module_name='wallet')
+@mutation(module_name='wallet', no_module_header=True)
 def Erc1155SingleWithdraw(payload: WithdrawErc1155SinglePayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
@@ -897,14 +903,15 @@ def Erc1155SingleWithdraw(payload: WithdrawErc1155SinglePayload) -> bool: # came
     LOGGER.debug(f"{metadata.msg_sender} withdrew id {payload.id} the {payload.amount} amount of {payload.token} token")
     return True
 
-@mutation(module_name='wallet')
+@mutation(module_name='wallet', no_module_header=True)
 def Erc1155SingleTransfer(payload: TransferErc1155SinglePayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
     wallet = get_wallet()
+    receiver = f"0x{payload.receiver[12:].hex()}" if payload.receiver.startswith(b'\0'*12) else f"0x{payload.receiver.hex()}"
     new_balance, new_receiver_balance = \
-        wallet.transfer_erc1155(payload.token,payload.receiver,payload.id,payload.amount)
+        wallet.transfer_erc1155(payload.token,receiver,payload.id,payload.amount)
 
     # send event
     asset_event = Erc1155Event(
@@ -919,22 +926,23 @@ def Erc1155SingleTransfer(payload: TransferErc1155SinglePayload) -> bool: # came
     emit_event(asset_event,tags=["wallet","erc1155","transfer",payload.token,payload.id,wallet.owner()])
 
     # send event
-    receiver_asset_event = Erc1155Event(
-        timestamp =metadata.block_timestamp,
-        user = payload.receiver,
-        address = payload.token,
-        mod_ids = [payload.id],
-        mod_amounts = [payload.amount],
-        ids = new_receiver_balance[0],
-        amounts = new_receiver_balance[1]
-    )
-    emit_event(receiver_asset_event,tags=["wallet","erc1155","transfer",payload.token,payload.id,payload.receiver])
+    if len(receiver) == 42: # only emit event for valid address length
+        receiver_asset_event = Erc1155Event(
+            timestamp =metadata.block_timestamp,
+            user = payload.receiver,
+            address = payload.token,
+            mod_ids = [payload.id],
+            mod_amounts = [payload.amount],
+            ids = new_receiver_balance[0],
+            amounts = new_receiver_balance[1]
+        )
+        emit_event(receiver_asset_event,tags=["wallet","erc1155","transfer",payload.token,payload.id,receiver])
 
-    LOGGER.debug(f"{metadata.msg_sender} transfered id {payload.id} the {payload.amount} amount of {payload.token} token to {payload.receiver}")
+    LOGGER.debug(f"{metadata.msg_sender} transfered id {payload.id} the {payload.amount} amount of {payload.token} token to {receiver}")
     return True
 
 @mutation(
-    module_name='wallet',
+    module_name='wallet', no_module_header=True,
     msg_sender=ERC1155_BATCH_PORTAL_ADDRESS,
     no_header=True,
     packed=True,
@@ -967,7 +975,7 @@ def deposit_erc1155_batch(payload: DepositErc1155BatchPayload) -> bool:
     LOGGER.debug(f"{payload.sender} deposited ids {batch_value.ids} the {batch_value.amounts} amounts of {payload.token} token")
     return True
 
-@mutation(module_name='wallet')
+@mutation(module_name='wallet', no_module_header=True)
 def Erc1155BatchWithdraw(payload: WithdrawErc1155BatchPayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
@@ -1004,17 +1012,18 @@ def Erc1155BatchWithdraw(payload: WithdrawErc1155BatchPayload) -> bool: # camel 
     LOGGER.debug(f"{metadata.msg_sender} withdrew ids {payload.ids} the {payload.amounts} amounts of {payload.token} token")
     return True
 
-@mutation(module_name='wallet')
+@mutation(module_name='wallet', no_module_header=True)
 def Erc1155BatchTransfer(payload: TransferErc1155BatchPayload) -> bool: # camel case name to maintain other hlf standard
     metadata = get_metadata()
 
     # get wallet
     wallet = get_wallet()
+    receiver = f"0x{payload.receiver[12:].hex()}" if payload.receiver.startswith(b'\0'*12) else f"0x{payload.receiver.hex()}"
     new_balance = [[],[]]
     new_receiver_balance = [[],[]]
     for i in range(min(len(payload.ids),len(payload.amounts))):
         new_balance, new_receiver_balance = \
-            wallet.transfer_erc1155(payload.token,payload.receiver,payload.ids[i],payload.amounts[i])
+            wallet.transfer_erc1155(payload.token,receiver,payload.ids[i],payload.amounts[i])
 
     # send event
     asset_event = Erc1155Event(
@@ -1031,25 +1040,28 @@ def Erc1155BatchTransfer(payload: TransferErc1155BatchPayload) -> bool: # camel 
     emit_event(asset_event,tags=["wallet","erc1155",payload.token,wallet.owner()])
 
     # send event
-    receiver_asset_event = Erc1155Event(
-        timestamp =metadata.block_timestamp,
-        user = payload.receiver,
-        address = payload.token,
-        mod_ids = payload.ids,
-        mod_amounts = payload.amounts,
-        ids = new_receiver_balance[0],
-        amounts = new_receiver_balance[1]
-    )
-    tags = ["wallet","erc1155","transfer",payload.token,payload.receiver]
-    tags.extend(payload.ids)
-    emit_event(receiver_asset_event,tags=tags)
+    if len(receiver) == 42: # only emit event for valid address length
+        receiver_asset_event = Erc1155Event(
+            timestamp =metadata.block_timestamp,
+            user = payload.receiver,
+            address = payload.token,
+            mod_ids = payload.ids,
+            mod_amounts = payload.amounts,
+            ids = new_receiver_balance[0],
+            amounts = new_receiver_balance[1]
+        )
+        tags = ["wallet","erc1155","transfer",payload.token,receiver]
+        tags.extend(payload.ids)
+        emit_event(receiver_asset_event,tags=tags)
 
-    LOGGER.debug(f"{metadata.msg_sender} transfered ids {payload.ids} the {payload.amounts} amounts of {payload.token} token to {payload.receiver}")
+    LOGGER.debug(f"{metadata.msg_sender} transfered ids {payload.ids} the {payload.amounts} amounts of {payload.token} token to {receiver}")
     return True
 
 # Queries
-@query(module_name='wallet', path_params=['address'])
+@query(module_name='ledger', path_params=['address'])
 def balance(payload: BalancePayload) -> bool:
     user_balance = get_wallet(payload.address).balance()
     add_output(user_balance)
     return True
+
+# TODO: getBalance and getTotalSupply queries
