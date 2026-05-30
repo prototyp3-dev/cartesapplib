@@ -128,17 +128,13 @@ def get_indexes(**kwargs):
                 o for o in idx_query for t in Tag if t.inout == o and t.name in tags
             )
         else:
-            tags_query = helpers.select((t.inout,t.name) for t in Tag.select().order_by(Tag.inout) if t.name in tags)
-            tags_query_counts = [(key, sum(1 for _,_ in value))
-                for key, value in itertools.groupby(tags_query.fetch(), lambda x: x[0])]
+            tags_query = Tag.select(lambda t: t.name in tags)
+            tags_query_counts = [(key, len(list(value)))
+                for key, value in itertools.groupby(tags_query.fetch(), lambda x: x.inout)]
             tags_inouts = [t[0] for t in tags_query_counts if t[1] == len(tags)]
-            reponse_query = helpers.distinct(
-                o for o in idx_query if o in tags_inouts
-            )
+            reponse_query = idx_query.filter(lambda o: o in tags_inouts).distinct()
     else:
-        reponse_query = helpers.distinct(
-            o for o in idx_query
-        )
+        reponse_query = idx_query.distinct()
 
     total = reponse_query.count()
 
@@ -165,7 +161,7 @@ def get_indexes(**kwargs):
         out = reponse_query.fetch()
 
 
-    return out, total, page
+    return list(out), total, page
 
 
 class IndexerPayload(BaseModel):

@@ -1,6 +1,6 @@
 [project]
 name = "cartesapplib"
-version = "0.1.1"
+version = "0.2.0"
 authors = [
   { name="Lyno Ferraz", email="lyno@prototyp3.dev" },
 ]
@@ -12,7 +12,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-# It actually need cartesapp, but it should already be installed on your system
+# It actually needs cartesapp, but it should already be installed on your system
 dependencies = [
 ]
 
