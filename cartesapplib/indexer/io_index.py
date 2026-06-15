@@ -128,7 +128,7 @@ def get_indexes(**kwargs):
                 o for o in idx_query for t in Tag if t.inout == o and t.name in tags
             )
         else:
-            tags_query = Tag.select(lambda t: t.name in tags)
+            tags_query = Tag.select(lambda t: t.name in tags).order_by(Tag.inout)
             tags_query_counts = [(key, len(list(value)))
                 for key, value in itertools.groupby(tags_query.fetch(), lambda x: x.inout)]
             tags_inouts = [t[0] for t in tags_query_counts if t[1] == len(tags)]
