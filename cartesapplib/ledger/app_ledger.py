@@ -25,11 +25,11 @@ TRANSFER_ERC1155_BATCH = b'c\x8a\xc6\xf9'
 
 # Portal addresses (defaults; can be overridden via LEDGER_CONFIG)
 
-ETHER_PORTAL_ADDRESS = "0xA632c5c05812c6a6149B7af5C56117d1D2603828"
-ERC20_PORTAL_ADDRESS = "0xACA6586A0Cf05bD831f2501E7B4aea550dA6562D"
-ERC721_PORTAL_ADDRESS = "0x9E8851dadb2b77103928518846c4678d48b5e371"
-ERC1155_SINGLE_PORTAL_ADDRESS = "0x18558398Dd1a8cE20956287a4Da7B76aE7A96662"
-ERC1155_BATCH_PORTAL_ADDRESS = "0xe246Abb974B307490d9C6932F48EbE79de72338A"
+ETHER_PORTAL_ADDRESS = "0x8b53327575ac999bdfa8003f4b5134DFF9027516"
+ERC20_PORTAL_ADDRESS = "0x22E57511C30CcE6CDaa742E13CE3b774fDC663b1"
+ERC721_PORTAL_ADDRESS = "0xcA3a0a47915C12F020CF70B938aCC8e744414cb8"
+ERC1155_SINGLE_PORTAL_ADDRESS = "0x13663E193673756a02e84b724B8a3422A9a7aab4"
+ERC1155_BATCH_PORTAL_ADDRESS = "0x3649c5E2De91C69a7Bb80D864f0039da5E511096"
 
 
 # Settings
@@ -247,23 +247,33 @@ def initialize(config):
     if mem_file is not None:
         if not isinstance(mem_file, str):
             raise Exception("ledger app config mem_file not valid")
-        if config.get('memory_size') is None or config.get('max_accounts') is None or \
-                config.get('max_assets') is None or config.get('max_balances') is None:
-            raise Exception("ledger app config mem configuration not valid")
+        if config.get("single_asset_account_drive") is not None and config.get("single_asset_account_drive"):
+            if config.get('memory_size') is None or config.get('max_accounts') is None:
+                raise Exception("ledger app config mem configuration not valid")
+            Context().ledger = Ledger(
+                memory_filename=mem_file,
+                offset=config.get('offset') or 0,
+                mem_length=config.get('memory_size'),
+                n_accounts=config.get('max_accounts'),
+                account_drive_token=config.get('account_drive_token'),
+            )
+        else:
+            if config.get('memory_size') is None or config.get('max_accounts') is None or \
+                    config.get('max_assets') is None or config.get('max_balances') is None:
+                raise Exception("ledger app config mem configuration not valid")
 
-        Context().ledger = Ledger(
-            memory_filename=mem_file,
-            offset=config.get('offset') or 0,
-            mem_length=config.get('memory_size'),
-            n_accounts=config.get('max_accounts'),
-            n_assets=config.get('max_assets'),
-            n_balances=config.get('max_balances'),
-            initialize_memory=False,
-        )
+            Context().ledger = Ledger(
+                memory_filename=mem_file,
+                offset=config.get('offset') or 0,
+                mem_length=config.get('memory_size'),
+                n_accounts=config.get('max_accounts'),
+                n_assets=config.get('max_assets'),
+                n_balances=config.get('max_balances'),
+            )
     else:
         Context().ledger = Ledger()
 
-    asset_info = get_ledger().retrieve_asset(base_token=True, force_find=True)
+    asset_info = get_ledger().retrieve_asset(base_token=True)
     EtherId.set(asset_info['asset_id'])
 
     ###

@@ -1,6 +1,6 @@
 [project]
 name = "cartesapplib"
-version = "0.2.2"
+version = "0.2.3"
 authors = [
   { name="Lyno Ferraz", email="lyno@prototyp3.dev" },
 ]
